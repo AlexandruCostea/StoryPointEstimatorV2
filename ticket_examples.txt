@@ -1,0 +1,10 @@
+Improve build system performance
+
+The build system takes too long when compiling multiple modules in parallel.
+
+
+
+
+Generic webwork aliases may clash with other plugins
+
+Some web work actions have commands that have very generic aliases, such as ""Update"", ""Move"" and ""Synch"" etc. These aliases have a good chance to clash with the action name or aliases used by other plugins.  These aliases should be given a name specific to the plugin, such as ""UpdateGreenHopperDropBoard""... Alternatively, the bang syntax can be used in place of command aliases, such as ""DropBoardAction!update"". In this case, there is no need to define aliases for commands. (However, still need to define alias as an empty String; otherwise, a NPE will be thrown when parsing the xml.)

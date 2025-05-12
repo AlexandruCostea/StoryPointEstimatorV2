@@ -1,0 +1,9 @@
+chromadb
+sentence_transformers
+pandas
+openai
+python-dotenv
+torch
+accelerate
+deepeval
+aiobotocore
