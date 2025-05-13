@@ -58,9 +58,12 @@ def get_estimation():
     title = title_entry.get()
     description = description_text.get("1.0", tk.END).strip()
 
-    if not title or not description:
-        messagebox.showwarning("Missing Input", "Please provide both title and description.")
+    if not title:
+        messagebox.showwarning("Missing Title", "Please provide at least a title.")
         return
+    
+    if not description:
+        description = ""
 
     similar_tickets = db.get_similar_tickets(title, description)
     prompt = PromptBuilder.construct_storypoint_prompt(similar_tickets, title, description)
@@ -68,8 +71,6 @@ def get_estimation():
     last_title = title
     last_description = description
     last_similar_tickets = similar_tickets
-
-    chat_window.insert(tk.END, f"\nYou:\nTitle: {title}\nDescription: {description}\n", "user")
 
     try:
         response = client.chat.completions.create(
@@ -84,14 +85,18 @@ def get_estimation():
         content = response.choices[0].message.content.strip()
         last_line = content.split("\n")[-1].strip()
 
-        last_estimation = int(''.join(filter(str.isdigit, content.split()[-1])))
-        if last_line.isnumeric():
-            last_estimation = int(last_line)
+        try:
+            last_estimation = int(''.join(filter(str.isdigit, content.split()[-1])))
+            if last_line.isnumeric():
+                last_estimation = int(last_line)
+        except:
+            last_estimation = 0
 
 
-        if check_toxicity(content):
-            chat_window.insert(tk.END, "\nDeepSeek:\nSorry, couldn't help with that.\n", "assistant")
+        if check_toxicity(content) or check_toxicity(title) or check_toxicity(description):
+            chat_window.insert(tk.END, "\nDeepSeek:\nSorry, couldn't help with that.\n0\n", "assistant")
         else:
+            chat_window.insert(tk.END, f"\nYou:\nTitle: {title}\nDescription: {description}\n", "user")
             chat_window.insert(tk.END, f"\nDeepSeek:\n{content}\n", "assistant")
         chat_window.see(tk.END)
 
@@ -103,6 +108,10 @@ def give_feedback(direction):
     global last_estimation, last_title, last_description, last_similar_tickets, model, tokenizer
     if not last_title or not last_description or not last_similar_tickets:
         messagebox.showwarning("No Estimate Yet", "Submit a ticket first.")
+        return
+    
+    if last_estimation == 0:
+        messagebox.showwarning("Invalid previous input", "Submit a valid ticket first.")
         return
 
     try:
@@ -169,9 +178,12 @@ Keep it brief and professional.
 
         new_estimate = adjusted_response.choices[0].message.content.strip()
         last_line = new_estimate.split("\n")[-1].strip()
-        last_estimation = int(''.join(filter(str.isdigit, new_estimate.split()[-1])))
-        if last_line.isnumeric():
-            last_estimation = int(last_line)
+        try:
+            last_estimation = int(''.join(filter(str.isdigit, new_estimate.split()[-1])))
+            if last_line.isnumeric():
+                last_estimation = int(last_line)
+        except:
+            last_estimation = 0
 
         if check_toxicity(new_estimate):
             chat_window.insert(tk.END, "\nDeepSeek (Adjusted):\nSorry, couldn't help with that.\n", "assistant")
